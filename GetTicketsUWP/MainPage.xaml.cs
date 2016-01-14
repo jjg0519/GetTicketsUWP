@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net;
 
 using System.Runtime.InteropServices.WindowsRuntime;
+using Windows.Devices.Gpio;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Security.Cryptography.Certificates;
@@ -32,6 +33,11 @@ namespace GetTicketsUWP
 
         private DispatcherTimer timer;
         static string queryUrl = "https://kyfw.12306.cn/otn/lcxxcx/query?purpose_codes=0X00&queryDate=2016-01-24&from_station=WHN&to_station=NDC";
+
+        private const int LED_PIN = 5;
+        private GpioPin pin;
+        private GpioPinValue pinValue;
+
         List<Train> TrainList = new List<Train>();
         public MainPage()
         {
@@ -41,9 +47,31 @@ namespace GetTicketsUWP
             timer = new DispatcherTimer();
             timer.Interval = TimeSpan.FromMilliseconds(500);
             timer.Tick += Timer_Tick;
-            timer.Start();
+            InitGPIO();
+            if (pin != null)
+            {
+                timer.Start();
+            }
         }
+        private void InitGPIO()
+        {
+            var gpio = GpioController.GetDefault();
 
+            // Show an error if there is no GPIO controller
+            if (gpio == null)
+            {
+                pin = null;
+                
+                return;
+            }
+
+            pin = gpio.OpenPin(LED_PIN);
+            pinValue = GpioPinValue.Low;
+            pin.Write(pinValue);
+            pin.SetDriveMode(GpioPinDriveMode.Output);
+
+            
+        }
         private async void Timer_Tick(object sender, object e)
         {
             var filter = new HttpBaseProtocolFilter();
@@ -74,7 +102,14 @@ namespace GetTicketsUWP
 
                 }
             }
-            Debug.WriteLine(TrainList);
+            foreach(var train in TrainList)
+            {
+                if(train.yw_num!="无")
+                {
+                    pin.Write(GpioPinValue.High);
+                    Debug.WriteLine(train.train_code + "有票了");
+                }
+            }
         }
     }
 
