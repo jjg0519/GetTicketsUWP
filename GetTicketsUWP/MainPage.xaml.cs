@@ -45,7 +45,7 @@ namespace GetTicketsUWP
 
 
             timer = new DispatcherTimer();
-            timer.Interval = TimeSpan.FromMilliseconds(500);
+            timer.Interval = TimeSpan.FromMinutes(5);
             timer.Tick += Timer_Tick;
             InitGPIO();
             if (pin != null)
@@ -57,7 +57,7 @@ namespace GetTicketsUWP
         {
             var gpio = GpioController.GetDefault();
 
-            // Show an error if there is no GPIO controller
+            
             if (gpio == null)
             {
                 pin = null;
